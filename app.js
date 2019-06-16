@@ -4,22 +4,47 @@ const moment = require('moment');
 const config = require('./lib/config');
 const _ = require('lodash');
 const fetcher = require('./lib/fetch/fetcher');
+const CronJob = require('cron').CronJob;
 
 const app = express()
 const port = 3000
 
 init();
 
+// TODO !!!!
+// Lagom
+new CronJob('5 * 2 * * *', function () {
+    console.log(new Date() + ' You will see this message every 5 second');
+    fetchAndSave("3098719");
+}, null, true);
+
+// Monopolis
+new CronJob('15 * 2 * * *', function () {
+    console.log(new Date() + ' You will see this message every 15 second');
+    fetchAndSave("593197");
+}, null, true);
+
+// Helovesus
+new CronJob('30 * 2 * * *', function () {
+    console.log(new Date() + ' You will see this message every 30 second');
+    fetchAndSave("1045848");
+}, null, true);
 
 app.get('/', (req, res) => {
 
     // TODO ! Refactor for multi step 
     // fetchAndAnalyse(shopId);
 
-    fetchAction();
+    // fetchAction();
 
     res.json({ 'status': 'ok' });
 })
+
+app.get('/fetchs', (req, res) => {
+    // Get the data from the DB
+    res.json(getCollection('fetchs'));
+})
+
 
 app.get('/products', (req, res) => {
     // Get the data from the DB
@@ -65,6 +90,7 @@ const fetchs = getCollection('fetchs');
 const shops = getCollection('shops').value();
 
 function fetchAction() {
+    // TODO !!!! Async call :( 
     shops.forEach(el => {
         fetchAndSave(el.id);
     })
