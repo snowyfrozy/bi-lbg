@@ -10,60 +10,25 @@ const port = 3000
 
 init();
 
-const low = require('lowdb')
-const FileSync = require('lowdb/adapters/FileSync')
-const adapter = new FileSync('db/product.json')
-const db = low(adapter)
-const collection = db
-    .defaults({ data: [] })
-    .get('data')
-
 
 app.get('/', (req, res) => {
-    // Find the shop id
-    const shopId = "3098719";
 
-    // For every shop, do this things bellow
+    // TODO ! Refactor for multi step 
+    // fetchAndAnalyse(shopId);
 
-    // Fetch data
-    fetcher.getProductByShopId(shopId)
-        .then(function (result) {
-            // Get the data from the DB
-            var orig = collection.value();
+    fetchAction();
 
-            // Find the difference by the shop id
-            var diff = _.differenceBy(result.data.GetShopProduct.data, orig, 'product_id');
-            console.log(diff);
-
-            // Append the shop id + more information (created_at, updated_at)
-            var toBeSaved = appendShopId(diff, { "shop_id": shopId, "created_at": (new Date()).getTime() });
-
-            // Save the diffference to the DB
-            db.get('data')
-                .merge(toBeSaved)
-                .write();
-
-            var summary = {
-                data_before: result.length,
-                to_be_added: diff.length
-            }
-
-            res.json(summary);
-        }, function (err) {
-            console.log(err);
-        });
-
+    res.json({ 'status': 'ok' });
 })
-
 
 app.get('/products', (req, res) => {
     // Get the data from the DB
-    var products = collection.value();
+    var products = getCollection('product');
     res.json(products);
 })
 
 function getCurrentTimestamp() {
-    return moment().format('YYMMDDD_h_mm_ss');
+    return (new Date()).getTime()
 }
 
 function appendShopId(arr, meta) {
@@ -84,6 +49,79 @@ function init() {
             users: authUser
         }))
     }
+
+}
+
+function getCollection(collectionName) {
+    const low = require('lowdb');
+    const FileSync = require('lowdb/adapters/FileSync');
+    const adapter = new FileSync('db/' + collectionName + '.json');
+    const db = low(adapter);
+
+    return db.defaults({ data: [] }).get('data');
+}
+
+const fetchs = getCollection('fetchs');
+const shops = getCollection('shops').value();
+
+function fetchAction() {
+    shops.forEach(el => {
+        fetchAndSave(el.id);
+    })
+}
+
+
+// Main Logic to fetch from remote and save it to the DB
+function fetchAndSave(shopId) {
+    // Fetch data
+    fetcher.getProductByShopId(shopId)
+
+        .then(function (result) {
+
+            console.log("HERE");
+
+            var entry = {
+                fetch_time: getCurrentTimestamp(),
+                shop_id: shopId,
+                value: result
+            };
+
+            fetchs.push(entry).write();
+        }, function (err) {
+            console.log(err);
+        });
+}
+
+function fetchAndAnalyse(shopId) {
+    const collection = getCollection('products');
+
+    // Fetch data
+    fetcher.getProductByShopId(shopId)
+        .then(function (result) {
+            // Get the data from the DB
+            var orig = collection.value();
+
+            // Find the difference by the shop id
+            var diff = _.differenceBy(result.data.GetShopProduct.data, orig, 'product_id');
+            console.log(diff);
+
+            // Append the shop id + more information (created_at, updated_at)
+            var toBeSaved = appendShopId(diff, { "shop_id": shopId, "created_at": (new Date()).getTime() });
+
+            // Save the diffference to the DB
+            collection
+                .merge(toBeSaved)
+                .write();
+
+            var summary = {
+                data_before: result.length,
+                to_be_added: diff.length
+            }
+
+            res.json(summary);
+        }, function (err) {
+            console.log(err);
+        });
 
 }
 
