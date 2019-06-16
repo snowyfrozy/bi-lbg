@@ -12,20 +12,22 @@ const port = 3000
 init();
 
 // TODO !!!!
+const hour = config().cron_hour;
+
 // Lagom
-new CronJob('5 * 2 * * *', function () {
+new CronJob('5 * ' + hour + ' * * *', function () {
     console.log(new Date() + ' You will see this message every 5 second');
     fetchAndSave("3098719");
 }, null, true);
 
 // Monopolis
-new CronJob('15 * 2 * * *', function () {
+new CronJob('15 * ' + hour + ' * * *', function () {
     console.log(new Date() + ' You will see this message every 15 second');
     fetchAndSave("593197");
 }, null, true);
 
 // Helovesus
-new CronJob('30 * 2 * * *', function () {
+new CronJob('30 * ' + hour + ' * * *', function () {
     console.log(new Date() + ' You will see this message every 30 second');
     fetchAndSave("1045848");
 }, null, true);
