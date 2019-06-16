@@ -91,6 +91,7 @@ function getCollection(collectionName) {
 const fetchs = getCollection('fetchs');
 const shops = getCollection('shops').value();
 
+// Possible solution : https://gist.github.com/bschwartz757/5d1ff425767fdc6baedb4e5d5a5135c8
 function fetchAction() {
     // TODO !!!! Async call :( 
     shops.forEach(el => {
