@@ -47,6 +47,28 @@ app.get('/fetchs', (req, res) => {
     res.json(getCollection('fetchs'));
 })
 
+app.get('/fetchs/latest', (req, res) => {
+    var fetchs = getCollection('fetchs').value();
+
+    var latestFetch =  _.maxBy(fetchs, 'fetch_time')
+    res.json(new Date(latestFetch.fetch_time));
+})
+
+
+// TODO ! For each shop find the latest 2 fetches, and then compare it !
+app.get('/analyse', (req, res) => {
+    // Get the data from the DB
+    var fetchs = getCollection('fetchs').value();
+    var length = fetchs.length;
+
+    var fetchTimes = _.map(fetchs, 'fetch_time');
+    _.forEach(fetchs, el => {
+        console.log(el.shop_id);
+        console.log(new Date(el.fetch_time));
+    });
+    res.json(length);
+})
+
 
 app.get('/products', (req, res) => {
     // Get the data from the DB
