@@ -47,6 +47,13 @@ app.get('/fetchs', (req, res) => {
     res.json(getCollection('fetchs'));
 })
 
+// app.get('/fetchs/:shopName', (req, res) => {
+//     var shop = getCollection('shops').find({alias: req.params.shopName}).value();
+//     // Get the data from the DB
+//     res.json(getCollection('fetchs').find({shop_id: shop.id}).size().value);
+// })
+
+
 app.get('/fetchs/latest', (req, res) => {
     var fetchs = getCollection('fetchs').value();
 
@@ -54,6 +61,10 @@ app.get('/fetchs/latest', (req, res) => {
     res.json(new Date(latestFetch.fetch_time));
 })
 
+app.get('/now', (req, res) => {
+    // Get the data from the DB
+    res.json(new Date());
+})
 
 // TODO ! For each shop find the latest 2 fetches, and then compare it !
 app.get('/analyse', (req, res) => {
@@ -154,7 +165,7 @@ function fetchAndAnalyse(shopId) {
 
             // Find the difference by the shop id
             var diff = _.differenceBy(result.data.GetShopProduct.data, orig, 'product_id');
-            console.log(diff);
+            console.log(iff);
 
             // Append the shop id + more information (created_at, updated_at)
             var toBeSaved = appendShopId(diff, { "shop_id": shopId, "created_at": (new Date()).getTime() });
