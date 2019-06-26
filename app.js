@@ -5,6 +5,7 @@ const config = require('./lib/config');
 const _ = require('lodash');
 const fetcher = require('./lib/fetch/fetcher');
 const CronJob = require('cron').CronJob;
+const rp = require('request-promise-native');
 
 const app = express()
 const port = 3000
@@ -14,22 +15,8 @@ init();
 // TODO !!!!
 const hour = config().cron_hour;
 
-// Lagom
 new CronJob('5 * ' + hour + ' * * *', function () {
-    console.log(new Date() + ' You will see this message every 5 second');
-    fetchAndSave("3098719");
-}, null, true);
-
-// Monopolis
-new CronJob('15 * ' + hour + ' * * *', function () {
-    console.log(new Date() + ' You will see this message every 15 second');
-    fetchAndSave("593197");
-}, null, true);
-
-// Helovesus
-new CronJob('30 * ' + hour + ' * * *', function () {
-    console.log(new Date() + ' You will see this message every 30 second');
-    fetchAndSave("1045848");
+    fetchAction()
 }, null, true);
 
 app.get('/', (req, res) => {
@@ -37,7 +24,7 @@ app.get('/', (req, res) => {
     // TODO ! Refactor for multi step 
     // fetchAndAnalyse(shopId);
 
-    // fetchAction();
+    fetchAction();
 
     res.json({ 'status': 'ok' });
 })
@@ -57,7 +44,7 @@ app.get('/fetchs', (req, res) => {
 app.get('/fetchs/latest', (req, res) => {
     var fetchs = getCollection('fetchs').value();
 
-    var latestFetch =  _.maxBy(fetchs, 'fetch_time')
+    var latestFetch = _.maxBy(fetchs, 'fetch_time')
     res.json(new Date(latestFetch.fetch_time));
 })
 
@@ -112,46 +99,37 @@ function init() {
 
 }
 
-function getCollection(collectionName) {
-    const low = require('lowdb');
-    const FileSync = require('lowdb/adapters/FileSync');
-    const adapter = new FileSync('db/' + collectionName + '.json');
-    const db = low(adapter);
-
-    return db.defaults({ data: [] }).get('data');
-}
-
-const fetchs = getCollection('fetchs');
-const shops = getCollection('shops').value();
-
 // Possible solution : https://gist.github.com/bschwartz757/5d1ff425767fdc6baedb4e5d5a5135c8
-function fetchAction() {
+async function fetchAction() {
     // TODO !!!! Async call :( 
-    shops.forEach(el => {
-        fetchAndSave(el.id);
+    await shops.forEach(async (el) => {
+        const doneSaving = await fetchAndSave(el.id);
+        console.debug("DONE for {}, with {}", el.id, doneSaving);
     })
-}
 
+}
 
 // Main Logic to fetch from remote and save it to the DB
-function fetchAndSave(shopId) {
+async function fetchAndSave(shopId) {
     // Fetch data
-    fetcher.getProductByShopId(shopId)
+    const products = await fetcher.getProductByShopId(shopId);
+    console.debug("Products for {} are {}", shopId, products);
 
-        .then(function (result) {
+    var entry = {
+        shop_id: shopId,
+        value: products
+    };
 
-            console.log("HERE");
+    await saveToStrapi(entry);
 
-            var entry = {
-                fetch_time: getCurrentTimestamp(),
-                shop_id: shopId,
-                value: result
-            };
+}
 
-            fetchs.push(entry).write();
-        }, function (err) {
-            console.log(err);
-        });
+async function saveToStrapi(entry) {
+    console.debug("Sending to backend")
+
+    const baseUrl =     config().backend_base_url + "fetches";
+    await rp.post(baseUrl, { json: true, body: entry });
+    console.debug("[DONE] Sending to backend");
 }
 
 function fetchAndAnalyse(shopId) {
