@@ -15,7 +15,7 @@
     "express-basic-auth": "^1.2.0",
     "fs-extra": "^8.0.1",
     "lowdb": "^1.0.0",
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "momentjs": "^2.0.0",
     "node-cron": "^2.0.3",
     "request": "^2.88.0",
